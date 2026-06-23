@@ -4,6 +4,8 @@
 #include "Engine/DataTable.h"
 #include "ItemSpawnRow.generated.h"
 
+
+
 USTRUCT(BlueprintType)
 struct FItemSpawnRow : public FTableRowBase
 {
