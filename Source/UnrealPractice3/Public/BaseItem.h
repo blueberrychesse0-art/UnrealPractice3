@@ -5,6 +5,8 @@
 #include "ItemInterface.h"
 #include "BaseItem.generated.h"
 
+class USphereComponent;
+
 UCLASS()
 class UNREALPRACTICE3_API ABaseItem : public AActor, public IItemInterface
 {
@@ -16,14 +18,28 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	FName ItemType;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	USceneComponent* Scene;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	USphereComponent* Collision;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	UStaticMeshComponent* StaticMesh;
 
-	// IItemInterface에서 요구하는 함수들을 반드시 구현
-	virtual void OnItemOverlap(AActor* OverlapActor) override;
-	virtual void OnItemEndOverlap(AActor* OverlapActor) override;
+	virtual void OnItemOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult) override;
+	virtual void OnItemEndOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex) override;
 	virtual void ActivateItem(AActor* Activator) override;
 	virtual FName GetItemType() const override;
 
-	// 아이템을 제거하는 공통 함수 (추가 이펙트나 로직을 넣을 수 있음)
 	virtual void DestroyItem();
 
 };
