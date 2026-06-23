@@ -21,7 +21,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mine")
     float ExplosionRadius;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mine")
-    float ExplosionDamage;
+    int32 ExplosionDamage;
 
     FTimerHandle ExplosionTimerHandle;
 
