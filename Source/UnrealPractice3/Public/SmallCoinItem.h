@@ -14,4 +14,3 @@ public:
 
 	virtual void ActivateItem(AActor* Activator) override;
 };
-};
