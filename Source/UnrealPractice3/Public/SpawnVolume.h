@@ -16,7 +16,7 @@ public:
 	ASpawnVolume();
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
-    void SpawnRandomItem();
+    AActor* SpawnRandomItem();
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
@@ -32,6 +32,6 @@ protected:
     FItemSpawnRow* GetRandomItem() const;
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
-    void SpawnItem(TSubclassOf<AActor> ItemClass);
+    AActor* SpawnItem(TSubclassOf<AActor> ItemClass);
 
 };
