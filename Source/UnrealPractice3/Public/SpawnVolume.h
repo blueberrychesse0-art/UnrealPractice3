@@ -26,6 +26,8 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
     UDataTable* ItemDataTable;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
+    UDataTable* WaveTable;
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
     FVector GetRandomPointInVolume() const;

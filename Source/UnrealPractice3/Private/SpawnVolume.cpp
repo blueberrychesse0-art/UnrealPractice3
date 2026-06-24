@@ -1,4 +1,5 @@
 #include "SpawnVolume.h"
+#include "MyGameState.h"
 #include "Components/BoxComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
