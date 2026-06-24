@@ -43,6 +43,15 @@ void AMineItem::Explode()
 		);
 	}
 
+	if (ExplosionSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			ExplosionSound,
+			GetActorLocation()
+		);
+	}
+
     TArray<AActor*> OverlappingActors;
     ExplosionCollision->GetOverlappingActors(OverlappingActors);
 

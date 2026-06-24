@@ -58,6 +58,15 @@ void ABaseItem::ActivateItem(AActor* Activator)
 		);
 	}
 
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			PickupSound,
+			GetActorLocation()
+		);
+	}
+
 	if (Particle)
 	{
 		FTimerHandle DestroyParticleTimerHandle;
