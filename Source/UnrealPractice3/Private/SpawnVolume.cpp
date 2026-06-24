@@ -48,6 +48,8 @@ AActor* ASpawnVolume::SpawnRandomItem()
             return SpawnItem(ActualClass);
         }
     }
+
+    return nullptr;
 }
 
 FItemSpawnRow* ASpawnVolume::GetRandomItem() const

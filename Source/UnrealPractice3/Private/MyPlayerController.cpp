@@ -1,5 +1,7 @@
 #include "MyPlayerController.h"
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "Blueprint/UserWidget.h" 
 
 AMyPlayerController::AMyPlayerController() : 
     InputMappingContext(nullptr),
@@ -22,6 +24,15 @@ void AMyPlayerController::BeginPlay()
             {
                 Subsystem->AddMappingContext(InputMappingContext, 0);
             }
+        }
+    }
+
+    if (HUDWidgetClass)
+    {
+        UUserWidget* HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidget)
+        {
+            HUDWidget->AddToViewport();
         }
     }
 }
