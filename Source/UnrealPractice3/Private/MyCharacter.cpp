@@ -1,9 +1,12 @@
 #include "MyCharacter.h"
 #include "MyPlayerController.h"
+#include "MyGameState.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Components/TextBlock.h"
 
 AMyCharacter::AMyCharacter()
 {
@@ -18,6 +21,10 @@ AMyCharacter::AMyCharacter()
     CameraComp->SetupAttachment(SpringArmComp, USpringArmComponent::SocketName);
     CameraComp->bUsePawnControlRotation = false;
 
+    OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
+    OverheadWidget->SetupAttachment(GetMesh());
+    OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
     NormalSpeed = 600.0f;
     SprintSpeedMultiplier = 1.5f;
     SprintSpeed = NormalSpeed * SprintSpeedMultiplier;
@@ -31,7 +38,7 @@ AMyCharacter::AMyCharacter()
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+    UpdateOverheadHP();
 }
 
 void AMyCharacter::Tick(float DeltaTime)
@@ -169,7 +176,7 @@ int32 AMyCharacter::GetHealth() const
 void AMyCharacter::AddHealth(float Amount)
 {
     Health = FMath::Clamp(Health + Amount, 0.0f, MaxHealth);
-    UE_LOG(LogTemp, Log, TEXT("Health increased to: %f"), Health);
+    UpdateOverheadHP();
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -177,7 +184,7 @@ float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
     float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
     Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
-    UE_LOG(LogTemp, Warning, TEXT("Health decreased to: %f"), Health);
+    UpdateOverheadHP();
 
     if (Health <= 0.0f)
     {
@@ -189,6 +196,23 @@ float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 void AMyCharacter::OnDeath()
 {
-    UE_LOG(LogTemp, Error, TEXT("Character is Dead!"));
+    AMyGameState* MyGameState = GetWorld() ? GetWorld()->GetGameState<AMyGameState>() : nullptr;
+    if (MyGameState)
+    {
+        MyGameState->OnGameOver();
+    }
 
+}
+
+void AMyCharacter::UpdateOverheadHP()
+{
+    if (!OverheadWidget) return;
+
+    UUserWidget* OverheadWidgetInstance = OverheadWidget->GetUserWidgetObject();
+    if (!OverheadWidgetInstance) return;
+
+    if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
+    {
+        HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
+    }
 }

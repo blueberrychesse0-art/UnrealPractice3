@@ -148,4 +148,5 @@ void AMyPlayerController::StartGame()
 	}
 
 	UGameplayStatics::OpenLevel(GetWorld(), FName("BasicLevel"));
+	SetPause(false);
 }

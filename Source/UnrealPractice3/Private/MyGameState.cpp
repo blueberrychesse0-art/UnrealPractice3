@@ -165,6 +165,7 @@ void AMyGameState::OnGameOver()
 	{
 		if (AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(PlayerController))
 		{
+			MyPlayerController->SetPause(true);
 			MyPlayerController->ShowMainMenu(true);
 		}
 	}
