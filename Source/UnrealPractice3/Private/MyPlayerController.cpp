@@ -1,6 +1,6 @@
 #include "MyPlayerController.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
+#include "MyGameState.h"
 #include "Blueprint/UserWidget.h" 
 
 AMyPlayerController::AMyPlayerController() : 
@@ -8,7 +8,9 @@ AMyPlayerController::AMyPlayerController() :
     MoveAction(nullptr),
     JumpAction(nullptr),
     LookAction(nullptr),
-    SprintAction(nullptr)
+    SprintAction(nullptr),
+    HUDWidgetClass(nullptr),
+    HUDWidgetInstance(nullptr)
 {
 }
 
@@ -29,10 +31,21 @@ void AMyPlayerController::BeginPlay()
 
     if (HUDWidgetClass)
     {
-        UUserWidget* HUDWidget = CreateWidget<UUserWidget>(this, HUDWidgetClass);
-        if (HUDWidget)
+        HUDWidgetInstance = CreateWidget<UUserWidget>(this, HUDWidgetClass);
+        if (HUDWidgetInstance)
         {
-            HUDWidget->AddToViewport();
+            HUDWidgetInstance->AddToViewport();
         }
     }
+
+    AMyGameState* MyGameState = GetWorld() ? GetWorld()->GetGameState<AMyGameState>() : nullptr;
+    if (MyGameState)
+    {
+        MyGameState->UpdateHUD();
+    }
+}
+
+UUserWidget* AMyPlayerController::GetHUDWidget() const
+{
+    return HUDWidgetInstance;
 }

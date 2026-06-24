@@ -1,7 +1,11 @@
 #include "MyGameState.h"
+#include "MyGameInstance.h"
+#include "MyPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "SpawnVolume.h"
 #include "CoinItem.h"
+#include "Components/TextBlock.h"
+#include "Blueprint/UserWidget.h"
 
 AMyGameState::AMyGameState()
 {
@@ -17,7 +21,16 @@ void AMyGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UpdateHUD();
 	StartLevel();
+
+	GetWorldTimerManager().SetTimer(
+		HUDUpdateTimerHandle,
+		this,
+		&AMyGameState::UpdateHUD,
+		0.1f,
+		true
+	);
 }
 
 int32 AMyGameState::GetScore() const
@@ -27,11 +40,27 @@ int32 AMyGameState::GetScore() const
 
 void AMyGameState::AddScore(int32 Amount)
 {
-    Score += Amount;
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UMyGameInstance* MyGameInstance = Cast<UMyGameInstance>(GameInstance);
+		if (MyGameInstance)
+		{
+			MyGameInstance->AddToScore(Amount);
+		}
+	}
 }
 
 void AMyGameState::StartLevel()
 {
+	if (UGameInstance* GameInstance = GetGameInstance())
+	{
+		UMyGameInstance* MyGameInstance = Cast<UMyGameInstance>(GameInstance);
+		if (MyGameInstance)
+		{
+			CurrentLevelIndex = MyGameInstance->CurrentLevelIndex;
+		}
+	}
+
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
 
@@ -65,6 +94,8 @@ void AMyGameState::StartLevel()
 		false
 	);
 
+	UpdateHUD();
+
 	UE_LOG(LogTemp, Warning, TEXT("Level %d Start!, Spawned %d coin"),
 		CurrentLevelIndex + 1,
 		SpawnedCoinCount);
@@ -92,25 +123,71 @@ void AMyGameState::OnCoinCollected()
 void AMyGameState::EndLevel()
 {
 	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
-	CurrentLevelIndex++;
 
-	if (CurrentLevelIndex >= MaxLevels)
+	if (UGameInstance* GameInstance = GetGameInstance())
 	{
-		OnGameOver();
-		return;
-	}
+		UMyGameInstance* MyGameInstance = Cast<UMyGameInstance>(GameInstance);
+		if (MyGameInstance)
+		{
+			AddScore(Score);
+			CurrentLevelIndex++;
+			MyGameInstance->CurrentLevelIndex = CurrentLevelIndex;
 
-	if (LevelMapNames.IsValidIndex(CurrentLevelIndex))
-	{
-		UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[CurrentLevelIndex]);
-	}
-	else
-	{
-		OnGameOver();
+			if (CurrentLevelIndex >= MaxLevels)
+			{
+				OnGameOver();
+				return;
+			}
+
+			if (LevelMapNames.IsValidIndex(CurrentLevelIndex))
+			{
+				UGameplayStatics::OpenLevel(GetWorld(), LevelMapNames[CurrentLevelIndex]);
+			}
+			else
+			{
+				OnGameOver();
+			}
+		}
 	}
 }
 
 void AMyGameState::OnGameOver()
 {
+	UpdateHUD();
 	UE_LOG(LogTemp, Warning, TEXT("Game Over!!"));
+}
+
+void AMyGameState::UpdateHUD()
+{
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(PlayerController);
+		{
+			if (UUserWidget* HUDWidget = MyPlayerController->GetHUDWidget())
+			{
+				if (UTextBlock* TimeText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Time"))))
+				{
+					float RemainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+					TimeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), RemainingTime)));
+				}
+
+				if (UTextBlock* ScoreText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Score"))))
+				{
+					if (UGameInstance* GameInstance = GetGameInstance())
+					{
+						UMyGameInstance* MyGameInstance = Cast<UMyGameInstance>(GameInstance);
+						if (MyGameInstance)
+						{
+							ScoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), MyGameInstance->TotalScore)));
+						}
+					}
+				}
+
+				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
+				{
+					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+				}
+			}
+		}
+	}
 }
