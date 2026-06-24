@@ -52,6 +52,14 @@ void AMyGameState::AddScore(int32 Amount)
 
 void AMyGameState::StartLevel()
 {
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(PlayerController))
+		{
+			MyPlayerController->ShowGameHUD();
+		}
+	}
+
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		UMyGameInstance* MyGameInstance = Cast<UMyGameInstance>(GameInstance);
@@ -153,8 +161,13 @@ void AMyGameState::EndLevel()
 
 void AMyGameState::OnGameOver()
 {
-	UpdateHUD();
-	UE_LOG(LogTemp, Warning, TEXT("Game Over!!"));
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (AMyPlayerController* MyPlayerController = Cast<AMyPlayerController>(PlayerController))
+		{
+			MyPlayerController->ShowMainMenu(true);
+		}
+	}
 }
 
 void AMyGameState::UpdateHUD()
