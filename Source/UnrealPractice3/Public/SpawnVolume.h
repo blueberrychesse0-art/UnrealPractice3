@@ -16,7 +16,9 @@ public:
 	ASpawnVolume();
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
-    AActor* SpawnRandomItem();
+    AActor* SpawnRandomItem(int32 lv, int32 wave);
+    int32 GetSpawnCount(int32 lv, int32 wave) const;
+    float GetWaveDuration(int32 lv, int32 wave) const;
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
@@ -31,8 +33,8 @@ protected:
 
     UFUNCTION(BlueprintCallable, Category = "Spawning")
     FVector GetRandomPointInVolume() const;
-    FItemSpawnRow* GetRandomItem() const;
-
+    FItemSpawnRow* GetRandomItem(int32 lv, int32 wave) const;
+    
     UFUNCTION(BlueprintCallable, Category = "Spawning")
     AActor* SpawnItem(TSubclassOf<AActor> ItemClass);
 

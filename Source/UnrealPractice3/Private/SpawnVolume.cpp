@@ -1,5 +1,6 @@
 #include "SpawnVolume.h"
 #include "MyGameState.h"
+#include "WaveRow.h"
 #include "Components/BoxComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
@@ -40,9 +41,9 @@ AActor* ASpawnVolume::SpawnItem(TSubclassOf<AActor> ItemClass)
     return SpawnedActor;
 }
 
-AActor* ASpawnVolume::SpawnRandomItem()
+AActor* ASpawnVolume::SpawnRandomItem(int32 lv, int32 wave)
 {
-    if (FItemSpawnRow* SelectedRow = GetRandomItem())
+    if (FItemSpawnRow* SelectedRow = GetRandomItem(lv, wave))
     {
         if (UClass* ActualClass = SelectedRow->ItemClass.Get())
         {
@@ -53,36 +54,102 @@ AActor* ASpawnVolume::SpawnRandomItem()
     return nullptr;
 }
 
-FItemSpawnRow* ASpawnVolume::GetRandomItem() const
+FItemSpawnRow* ASpawnVolume::GetRandomItem(int32 lv, int32 wave) const
 {
     if (!ItemDataTable) return nullptr;
 
-    TArray<FItemSpawnRow*> AllRows;
-    static const FString ContextString(TEXT("ItemSpawnContext"));
-    ItemDataTable->GetAllRows(ContextString, AllRows);
+    if (!WaveTable) return nullptr;
 
-    if (AllRows.IsEmpty()) return nullptr;
+    FName TargetSpawnSet = NAME_None;
+    TArray<FWaveRow*> AllWaveRows;
+    static const FString WaveContext(TEXT("WaveContext"));
+    WaveTable->GetAllRows(WaveContext, AllWaveRows);
 
-    float TotalChance = 0.0f; 
-    for (const FItemSpawnRow* Row : AllRows)
+    for (const FWaveRow* WaveRow : AllWaveRows)
     {
-        if (Row)
+        if (WaveRow && WaveRow->Level == lv && WaveRow->Wave == wave)
         {
-            TotalChance += Row->SpawnChance; 
+            TargetSpawnSet = WaveRow->SpawnSet;
+            break;
+        }
+    }
+
+    if (TargetSpawnSet.IsNone()) return nullptr;
+
+    TArray<FItemSpawnRow*> AllItemRows;
+    static const FString ContextString(TEXT("ItemSpawnContext"));
+    ItemDataTable->GetAllRows(ContextString, AllItemRows);
+    
+    if (AllItemRows.IsEmpty()) return nullptr;
+    TArray<FItemSpawnRow*> FilteredItemRows;
+    float TotalChance = 0.0f;
+
+    for (FItemSpawnRow* ItemRow : AllItemRows)
+    {
+        if (ItemRow && ItemRow->SpawnSet == TargetSpawnSet)
+        {
+            FilteredItemRows.Add(ItemRow);
+            TotalChance += ItemRow->SpawnChance;
         }
     }
 
     const float RandValue = FMath::FRandRange(0.0f, TotalChance);
     float AccumulateChance = 0.0f;
 
-    for (FItemSpawnRow* Row : AllRows)
+    for (FItemSpawnRow* ItemRow : FilteredItemRows)
     {
-        AccumulateChance += Row->SpawnChance;
+        AccumulateChance += ItemRow->SpawnChance;
         if (RandValue <= AccumulateChance)
         {
-            return Row;
+            return ItemRow;
         }
     }
 
     return nullptr;
+}
+
+int32 ASpawnVolume::GetSpawnCount(int32 lv, int32 wave) const
+{
+    if (!WaveTable) return 0;
+
+    TArray<FWaveRow*> AllRows;
+    static const FString ContextString(TEXT("WaveContext"));
+    WaveTable->GetAllRows(ContextString, AllRows);
+
+    if (AllRows.IsEmpty()) return 0;
+
+    for (const FWaveRow* Row : AllRows)
+    {
+        if (Row->Level == lv)
+        {
+            if (Row->Wave == wave)
+            {
+                return Row->SpawnCount;
+            }
+        }
+    }
+
+    return 0;
+}
+
+float ASpawnVolume::GetWaveDuration(int32 lv, int32 wave) const
+{
+    if (!WaveTable) return 0.0f;
+
+    TArray<FWaveRow*> AllWaveRows;
+    static const FString WaveContext(TEXT("WaveContext"));
+    WaveTable->GetAllRows(WaveContext, AllWaveRows);
+
+    if (AllWaveRows.Num() > 0)
+    {
+        for (const FWaveRow* WaveRow : AllWaveRows)
+        {
+            if (WaveRow && WaveRow->Level == lv && WaveRow->Wave == wave)
+            {
+                return WaveRow->Duration;
+            }
+        }
+    }
+
+    return 0.0f;
 }

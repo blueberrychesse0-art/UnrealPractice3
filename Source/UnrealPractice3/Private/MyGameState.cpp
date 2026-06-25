@@ -4,17 +4,20 @@
 #include "Kismet/GameplayStatics.h"
 #include "SpawnVolume.h"
 #include "CoinItem.h"
+#include "WaveRow.h"
 #include "Components/TextBlock.h"
 #include "Blueprint/UserWidget.h"
 
 AMyGameState::AMyGameState()
 {
-    Score = 0;
+	Score = 0;
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
 	LevelDuration = 30.0f;
 	CurrentLevelIndex = 0;
+	CurrentWaveIndex = 0;
 	MaxLevels = 3;
+	MaxWaves = 3;
 }
 
 void AMyGameState::BeginPlay()
@@ -35,7 +38,7 @@ void AMyGameState::BeginPlay()
 
 int32 AMyGameState::GetScore() const
 {
-    return Score;
+	return Score;
 }
 
 void AMyGameState::AddScore(int32 Amount)
@@ -68,23 +71,24 @@ void AMyGameState::StartLevel()
 			CurrentLevelIndex = MyGameInstance->CurrentLevelIndex;
 		}
 	}
-
+	
 	SpawnedCoinCount = 0;
 	CollectedCoinCount = 0;
 
 	TArray<AActor*> FoundVolumes;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnVolume::StaticClass(), FoundVolumes);
 
-	const int32 ItemToSpawn = 40;
-
-	for (int32 i = 0; i < ItemToSpawn; i++)
+	if (FoundVolumes.Num() > 0)
 	{
-		if (FoundVolumes.Num() > 0)
+		ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
+		if (SpawnVolume)
 		{
-			ASpawnVolume* SpawnVolume = Cast<ASpawnVolume>(FoundVolumes[0]);
-			if (SpawnVolume)
+			int32 ItemToSpawn = SpawnVolume->GetSpawnCount(CurrentLevelIndex + 1, CurrentWaveIndex + 1);
+			LevelDuration = SpawnVolume->GetWaveDuration(CurrentLevelIndex + 1, CurrentWaveIndex + 1);
+
+			for (int32 i = 0; i < ItemToSpawn; i++)
 			{
-				AActor* SpawnedActor = SpawnVolume->SpawnRandomItem();
+				AActor* SpawnedActor = SpawnVolume->SpawnRandomItem(CurrentLevelIndex + 1, CurrentWaveIndex + 1);
 
 				if (SpawnedActor && SpawnedActor->IsA(ACoinItem::StaticClass()))
 				{
@@ -103,15 +107,18 @@ void AMyGameState::StartLevel()
 	);
 
 	UpdateHUD();
-
-	UE_LOG(LogTemp, Warning, TEXT("Level %d Start!, Spawned %d coin"),
-		CurrentLevelIndex + 1,
-		SpawnedCoinCount);
 }
 
 void AMyGameState::OnLevelTimeUp()
 {
-	EndLevel();
+	if (CurrentWaveIndex >= MaxWaves - 1)
+	{
+		EndLevel();
+	}
+	else
+	{
+		EndWave();
+	}
 }
 
 void AMyGameState::OnCoinCollected()
@@ -124,8 +131,30 @@ void AMyGameState::OnCoinCollected()
 
 		if (SpawnedCoinCount > 0 && CollectedCoinCount >= SpawnedCoinCount)
 		{
-			EndLevel();
+			if (CurrentWaveIndex >= MaxWaves - 1)
+			{
+				EndLevel();
+			}
+			else
+			{
+				CurrentWaveIndex++;
+				StartLevel();
+			}
 		}
+}
+
+void AMyGameState::EndWave()
+{
+	GetWorldTimerManager().ClearTimer(LevelTimerHandle);
+	CurrentWaveIndex++;
+
+	if (CurrentWaveIndex >= MaxWaves)
+	{
+		EndLevel();
+		return;
+	}
+
+	StartLevel();
 }
 
 void AMyGameState::EndLevel()
@@ -200,6 +229,11 @@ void AMyGameState::UpdateHUD()
 				if (UTextBlock* LevelIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Level"))))
 				{
 					LevelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1)));
+				}
+
+				if (UTextBlock* WaveIndexText = Cast<UTextBlock>(HUDWidget->GetWidgetFromName(TEXT("Wave"))))
+				{
+					WaveIndexText->SetText(FText::FromString(FString::Printf(TEXT("Wave: %d"), CurrentWaveIndex + 1)));
 				}
 			}
 		}
