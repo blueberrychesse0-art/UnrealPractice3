@@ -1,6 +1,7 @@
 #include "MyCharacter.h"
 #include "MyPlayerController.h"
 #include "MyGameState.h"
+#include "StatusDebuffComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -24,6 +25,8 @@ AMyCharacter::AMyCharacter()
     OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
     OverheadWidget->SetupAttachment(GetMesh());
     OverheadWidget->SetWidgetSpace(EWidgetSpace::Screen);
+
+    DebuffComponent = CreateDefaultSubobject<UStatusDebuffComponent>(TEXT("DebuffComponent"));
 
     NormalSpeed = 600.0f;
     SprintSpeedMultiplier = 1.5f;
@@ -214,5 +217,24 @@ void AMyCharacter::UpdateOverheadHP()
     if (UTextBlock* HPText = Cast<UTextBlock>(OverheadWidgetInstance->GetWidgetFromName(TEXT("OverHeadHP"))))
     {
         HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), Health, MaxHealth)));
+    }
+}
+
+void AMyCharacter::UpdateMovementSpeed()
+{
+    if (!GetCharacterMovement() || !DebuffComponent) return;
+
+    bool bIsSprinting = (GetCharacterMovement()->MaxWalkSpeed > NormalSpeed + 10.0f) || (GetCharacterMovement()->MaxWalkSpeed == SprintSpeed);
+    float BaseSpeed = bIsSprinting ? SprintSpeed : NormalSpeed;
+
+    if (DebuffComponent->IsDebuffActive(EDebuffType::Slow))
+    {
+        int32 Stacks = DebuffComponent->GetDebuffStack(EDebuffType::Slow);
+        float SpeedModifier = FMath::Pow(0.5f, Stacks); // 50% 감소 공식
+        GetCharacterMovement()->MaxWalkSpeed = BaseSpeed * SpeedModifier;
+    }
+    else
+    {
+        GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
     }
 }

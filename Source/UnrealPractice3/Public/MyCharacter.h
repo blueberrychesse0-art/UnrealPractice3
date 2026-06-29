@@ -7,6 +7,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UWidgetComponent;
+class UStatusDebuffComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -22,6 +23,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void AddHealth(float Amount);
+	void UpdateMovementSpeed();
 
 protected:
 	virtual void BeginPlay() override;
@@ -32,6 +34,9 @@ protected:
 	UCameraComponent* CameraComp;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UWidgetComponent* OverheadWidget;
+	// 디버프 컴포넌트 변수 등록
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debuff")
+	UStatusDebuffComponent* DebuffComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float NormalSpeed;
