@@ -46,7 +46,6 @@ void UStatusDebuffComponent::ClearDebuff(EDebuffType Type)
 		ActiveDebuffs.Remove(Type);
 		DebuffStacks.Remove(Type);
 
-		// 해제 시에도 캐릭터 속도 원복 처리
 		if (Type == EDebuffType::Slow)
 		{
 			if (AMyCharacter* OwnerChar = Cast<AMyCharacter>(GetOwner()))

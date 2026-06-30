@@ -230,7 +230,7 @@ void AMyCharacter::UpdateMovementSpeed()
     if (DebuffComponent->IsDebuffActive(EDebuffType::Slow))
     {
         int32 Stacks = DebuffComponent->GetDebuffStack(EDebuffType::Slow);
-        float SpeedModifier = FMath::Pow(0.5f, Stacks); // 50% 감소 공식
+        float SpeedModifier = FMath::Pow(0.5f, Stacks);
         GetCharacterMovement()->MaxWalkSpeed = BaseSpeed * SpeedModifier;
     }
     else

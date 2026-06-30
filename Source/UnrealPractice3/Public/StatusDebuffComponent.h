@@ -27,7 +27,7 @@ public:
 
 	int32 GetDebuffStack(EDebuffType Type) const;
 
-	//UPROPERTY(BlueprintAssignable, Category = "Debuff|UI")
+	//UPROPERTY(BlueprintAssignable, Category = "Debuff")
 	//FOnDebuffStateChanged OnDebuffStateChanged;
 protected:
 	void ClearDebuff(EDebuffType Type);
