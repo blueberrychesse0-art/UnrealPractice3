@@ -83,6 +83,18 @@ void AMyPlayerController::ShowMainMenu(bool bIsRestart)
 			}
 		}
 
+		if (UTextBlock* ExitButtonText = Cast<UTextBlock>(MainMenuWidgetInstance->GetWidgetFromName(TEXT("ExitButtonText"))))
+		{
+			if (bIsRestart)
+			{
+				ExitButtonText->SetText(FText::FromString(TEXT("Main Menu")));
+			}
+			else
+			{
+				ExitButtonText->SetText(FText::FromString(TEXT("Exit")));
+			}
+		}
+
 		if (bIsRestart)
 		{
 			UFunction* PlayAnimFunc = MainMenuWidgetInstance->FindFunction(FName("PlayGameOverAnim"));
